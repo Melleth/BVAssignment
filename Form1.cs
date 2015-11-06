@@ -66,8 +66,10 @@ namespace INFOIBV
             {
                 for (int y = 0; y < InputImage.Size.Height; y++)
                 {
+                    // Convert To grayscale.
                     Color pixelColor = Image[x, y];                         // Get the pixel color at coordinate (x,y)
-                    Color updatedColor = Color.FromArgb(255 - pixelColor.R, 255 - pixelColor.G, 255 - pixelColor.B); // Negative image
+                    //Color updatedColor = Color.FromArgb(255 - pixelColor.R, 255 - pixelColor.G, 255 - pixelColor.B); // Negative image
+                    Color updatedColor = Color.FromArgb(pixelColor.R, pixelColor.R, pixelColor.R);
                     Image[x, y] = updatedColor;                             // Set the new pixel color at coordinate (x,y)
                     progressBar.PerformStep();                              // Increment progress bar
                 }
