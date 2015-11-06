@@ -66,12 +66,21 @@ namespace INFOIBV
             {
                 for (int y = 0; y < InputImage.Size.Height; y++)
                 {
-                    // Convert To grayscale.
                     Color pixelColor = Image[x, y];                         // Get the pixel color at coordinate (x,y)
-                    //Color updatedColor = Color.FromArgb(255 - pixelColor.R, 255 - pixelColor.G, 255 - pixelColor.B); // Negative image
-                    Color updatedColor = Color.FromArgb(pixelColor.R, pixelColor.R, pixelColor.R);
+                    Color updatedColor;
+                    //Thresholding, we assume we have bright triangles
+                    if (pixelColor.R < 200)
+                    {
+                        updatedColor = Color.FromArgb(0, 0, 0);
+                    }
+                    else
+                    {
+                        updatedColor = Color.FromArgb(pixelColor.R, pixelColor.R, pixelColor.R);
+                    }
+                
                     Image[x, y] = updatedColor;                             // Set the new pixel color at coordinate (x,y)
-                    progressBar.PerformStep();                              // Increment progress bar
+                    progressBar.PerformStep();                           // Increment progress bar
+
                 }
             }
             //==========================================================================================
