@@ -69,20 +69,52 @@ namespace INFOIBV
                     Color pixelColor = Image[x, y];                         // Get the pixel color at coordinate (x,y)
                     Color updatedColor;
                     //Thresholding, we assume we have bright triangles
-                    if (pixelColor.R < 200)
+                    if (pixelColor.R < 210)
                     {
                         updatedColor = Color.FromArgb(0, 0, 0);
                     }
                     else
                     {
-                        updatedColor = Color.FromArgb(pixelColor.R, pixelColor.R, pixelColor.R);
+                        updatedColor = Color.FromArgb(255, 255, 255);
                     }
                 
                     Image[x, y] = updatedColor;                             // Set the new pixel color at coordinate (x,y)
                     progressBar.PerformStep();                           // Increment progress bar
-
                 }
             }
+            //Close gaps, first maka a copy of the image
+            Color[,] ClosedImage = Image;
+            for (int x = 0; x < InputImage.Size.Width-1; x++)
+            {
+                for (int y = 0; y < InputImage.Size.Height-1; y++)
+                {
+                    Color pixelColor = Image[x, y];
+                    if (pixelColor.R == 255)
+                    {
+                        // Check if we are in bounds foy y
+                        if (y > 1 && y < InputImage.Size.Height)
+                        {
+                            // Check neighbours
+                            if (Image[x, y-1] == Color.FromArgb(0,0,0) && Image[x, y + 1].R == 0)
+                            {
+                                ClosedImage[x, y] = Color.FromArgb(0, 0, 0);
+                            }
+                        }
+                        // Check if we are in bounds for x
+                        if (x > 1 && x < InputImage.Size.Height)
+                        {
+                            //Check neighbours
+                            if (Image[x - 1, y].R == 0 && Image[x + 1, y].R == 0)
+                            {
+                                ClosedImage[x, y] = Color.FromArgb(0, 0, 0);
+                            }
+                        }
+                    }
+                }
+            }
+            // Set the image to the closed image
+            Image = ClosedImage;
+
             //==========================================================================================
 
             // Copy array to output Bitmap
