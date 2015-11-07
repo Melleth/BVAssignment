@@ -154,8 +154,8 @@ namespace INFOIBV
             //++++++END OF DILATION++++++
             
 
-            //TODO: ACTUALLY CLOSE THE IMAGE! We need to perform dilation after the erosion (which is implemented above).
-            // Set the image to the closed image
+            //TODO: step 1: label remaining objects
+            //TODO: step 2: analyze labeled objects. remove not "triangily" objects
             
 
             //==========================================================================================
