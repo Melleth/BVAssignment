@@ -82,12 +82,13 @@ namespace INFOIBV
                     progressBar.PerformStep();                           // Increment progress bar
                 }
             }
-            //Close gaps, first make a copy of the image NOTE: arraycopy = original array only gives a refference! BEWARE!
+            //Close gaps, first make a copy of the image NOTE: arraycopy = originalarray only gives a refference! BEWARE!
             // Declare color vars because somehow Color.White != Color.FromArgb(255,255,255)!!!!
             Color white = Color.FromArgb(255, 255, 255);
             Color black = Color.FromArgb(0, 0, 0);
             Color[,] ClosedImage = new Color[InputImage.Size.Width, InputImage.Size.Height];
             Array.Copy(Image, 0, ClosedImage, 0, Image.Length);
+            //++++++EROSION++++++
             for (int x = 0; x < InputImage.Size.Width-1; x++)
             {
                 for (int y = 0; y < InputImage.Size.Height-1; y++)
@@ -95,21 +96,20 @@ namespace INFOIBV
                     Color pixelColor = Image[x, y];
                     if (pixelColor == white)
                     {
-                        //Console.WriteLine("White detected");
+                        // Found a white pixel.
                         // Check if we are in bounds foy y
                         if (y > 1 && y < InputImage.Size.Height)
                         {
-                            // Check neighbours
+                            // Check neighbours (we're sort of evaluating 3 values at a time to decide the color of the middle one)
                             if (Image[x, y - 1] == white && Image[x, y + 1] == white)
                                 ClosedImage[x, y] = white;
                             else
                                 ClosedImage[x, y] = black;
 
                         }
-                        // Check if we are in bounds for x
+                        // Same stuff for x
                         if (x > 1 && x < InputImage.Size.Height)
                         {
-                            //Check neighbours
                             if (Image[x - 1, y] == white && Image[x + 1, y] == white)
                                 ClosedImage[x, y] = white;
                             else
@@ -118,7 +118,8 @@ namespace INFOIBV
                     }
                 }
             }
-            //TODO: ACTUALLY CLOSE THE IMAGE! We need to perform dilation after the erosion.
+            //++++++END OF ERIOSION+++++
+            //TODO: ACTUALLY CLOSE THE IMAGE! We need to perform dilation after the erosion (which is implemented above).
             // Set the image to the closed image
             Image = ClosedImage;
 
