@@ -69,7 +69,7 @@ namespace INFOIBV
                     Color pixelColor = Image[x, y];                         // Get the pixel color at coordinate (x,y)
                     Color updatedColor;
                     //Thresholding, we assume we have bright triangles
-                    if (pixelColor.R < 210)
+                    if (pixelColor.R < 180)
                     {
                         updatedColor = Color.FromArgb(0, 0, 0);
                     }
@@ -82,36 +82,43 @@ namespace INFOIBV
                     progressBar.PerformStep();                           // Increment progress bar
                 }
             }
-            //Close gaps, first maka a copy of the image
-            Color[,] ClosedImage = Image;
+            //Close gaps, first make a copy of the image NOTE: arraycopy = original array only gives a refference! BEWARE!
+            // Declare color vars because somehow Color.White != Color.FromArgb(255,255,255)!!!!
+            Color white = Color.FromArgb(255, 255, 255);
+            Color black = Color.FromArgb(0, 0, 0);
+            Color[,] ClosedImage = new Color[InputImage.Size.Width, InputImage.Size.Height];
+            Array.Copy(Image, 0, ClosedImage, 0, Image.Length);
             for (int x = 0; x < InputImage.Size.Width-1; x++)
             {
                 for (int y = 0; y < InputImage.Size.Height-1; y++)
                 {
                     Color pixelColor = Image[x, y];
-                    if (pixelColor.R == 255)
+                    if (pixelColor == white)
                     {
+                        //Console.WriteLine("White detected");
                         // Check if we are in bounds foy y
                         if (y > 1 && y < InputImage.Size.Height)
                         {
                             // Check neighbours
-                            if (Image[x, y-1] == Color.FromArgb(0,0,0) && Image[x, y + 1].R == 0)
-                            {
-                                ClosedImage[x, y] = Color.FromArgb(0, 0, 0);
-                            }
+                            if (Image[x, y - 1] == white && Image[x, y + 1] == white)
+                                ClosedImage[x, y] = white;
+                            else
+                                ClosedImage[x, y] = black;
+
                         }
                         // Check if we are in bounds for x
                         if (x > 1 && x < InputImage.Size.Height)
                         {
                             //Check neighbours
-                            if (Image[x - 1, y].R == 0 && Image[x + 1, y].R == 0)
-                            {
-                                ClosedImage[x, y] = Color.FromArgb(0, 0, 0);
-                            }
+                            if (Image[x - 1, y] == white && Image[x + 1, y] == white)
+                                ClosedImage[x, y] = white;
+                            else
+                                ClosedImage[x, y] = black;
                         }
                     }
                 }
             }
+            //TODO: ACTUALLY CLOSE THE IMAGE! We need to perform dilation after the erosion.
             // Set the image to the closed image
             Image = ClosedImage;
 
