@@ -69,20 +69,95 @@ namespace INFOIBV
                     Color pixelColor = Image[x, y];                         // Get the pixel color at coordinate (x,y)
                     Color updatedColor;
                     //Thresholding, we assume we have bright triangles
-                    if (pixelColor.R < 200)
+                    if (pixelColor.R < 180)
                     {
                         updatedColor = Color.FromArgb(0, 0, 0);
                     }
                     else
                     {
-                        updatedColor = Color.FromArgb(pixelColor.R, pixelColor.R, pixelColor.R);
+                        updatedColor = Color.FromArgb(255, 255, 255);
                     }
                 
                     Image[x, y] = updatedColor;                             // Set the new pixel color at coordinate (x,y)
                     progressBar.PerformStep();                           // Increment progress bar
-
                 }
             }
+            //Close gaps, first make a copy of the image NOTE: arraycopy = originalarray only gives a refference! BEWARE!
+            // Declare color vars because somehow Color.White != Color.FromArgb(255,255,255)!!!!
+            Color white = Color.FromArgb(255, 255, 255);
+            Color black = Color.FromArgb(0, 0, 0);
+            Color[,] CopyImage = new Color[InputImage.Size.Width, InputImage.Size.Height];
+            Array.Copy(Image, 0, CopyImage, 0, Image.Length);
+            //++++++EROSION++++++
+            for (int x = 0; x < InputImage.Size.Width-1; x++)
+            {
+                for (int y = 0; y < InputImage.Size.Height-1; y++)
+                {
+                    Color pixelColor = Image[x, y];
+                    if (pixelColor == white)
+                    {
+                        // Found a white pixel.
+                        // Check if we are in bounds foy y
+                        if (y > 1 && y < InputImage.Size.Height)
+                        {
+                            // Check neighbours (we're sort of evaluating 3 values at a time to decide the color of the middle one)
+                            if (Image[x, y - 1] == white && Image[x, y + 1] == white)
+                                CopyImage[x, y] = white;
+                            else
+                                CopyImage[x, y] = black;
+
+                        }
+                        // Same stuff for x
+                        if (x > 1 && x < InputImage.Size.Height)
+                        {
+                            if (Image[x - 1, y] == white && Image[x + 1, y] == white)
+                                CopyImage[x, y] = white;
+                            else
+                                CopyImage[x, y] = black;
+                        }
+                    }
+                }
+            }
+            // Flush the erosion to the image
+            Array.Copy(CopyImage, 0, Image, 0, CopyImage.Length);
+            //++++++END OF ERIOSION+++++
+            //++++++DILATION++++++
+            for (int x = 0; x < InputImage.Size.Width - 1; x++)
+            {
+                for (int y = 0; y < InputImage.Size.Height - 1; y++)
+                {
+                    Color pixelColor = Image[x, y];
+                    if (pixelColor == white)
+                    {
+                        // Check bounds for y
+                        if (y > 1 && y < InputImage.Size.Height)
+                        {
+                            // Do the actual dilation for y
+                            if (Image[x, y - 1] == black)
+                                CopyImage[x, y - 1] = white;
+                            if (Image[x, y + 1] == black)
+                                CopyImage[x, y + 1] = white;
+                        }
+                        if (x > 1 && x < InputImage.Size.Height)
+                        {
+                            // Do the actual dilation for x
+                            if (Image[x - 1, y] == black)
+                                CopyImage[x - 1, y] = white;
+                            if (Image[x + 1, y] == black)
+                                CopyImage[x + 1, y] = white;
+                        }
+                    }
+                }
+            }
+            // Flush the dilation to the image
+            Array.Copy(CopyImage, 0, Image, 0, CopyImage.Length);
+            //++++++END OF DILATION++++++
+            
+
+            //TODO: ACTUALLY CLOSE THE IMAGE! We need to perform dilation after the erosion (which is implemented above).
+            // Set the image to the closed image
+            
+
             //==========================================================================================
 
             // Copy array to output Bitmap
