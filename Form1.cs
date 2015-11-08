@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using System.IO;
+using System.Threading;
 
 namespace INFOIBV
 {
@@ -14,10 +15,12 @@ namespace INFOIBV
     {
         private Bitmap InputImage;
         private Bitmap OutputImage;
+        Color[,] Labels;
 
         public INFOIBV()
         {
             InitializeComponent();
+            
         }
 
         private void LoadImageButton_Click(object sender, EventArgs e)
@@ -152,8 +155,46 @@ namespace INFOIBV
             // Flush the dilation to the image
             Array.Copy(CopyImage, 0, Image, 0, CopyImage.Length);
             //++++++END OF DILATION++++++
-            
+            //++++++LABEL++++++
+            Labels = new Color[InputImage.Size.Width, InputImage.Size.Height];
+            Array.Copy(Image, 0, Labels, 0, Image.Length);
+            Color labelColor = Color.FromArgb(3,3,3);
+            int width = InputImage.Size.Width;
+            int height = InputImage.Size.Height;
+            for (int x = 0; x < InputImage.Size.Width - 1; x++)
+            {
+                for (int y = 0; y < InputImage.Size.Height - 1; y++)
+                {
+                    Color pixelColor = Labels[x, y];
+                    if (pixelColor == white)
+                    {
 
+                        var thread = new Thread(
+                        () => Label(labelColor, x, y, width, height), 10000000);
+                        thread.Start();
+                        thread.Join();
+                        Label(labelColor, x, y, width, height);
+                        if (labelColor.R == 255)
+                        {
+                            for (int a = 0; a < InputImage.Size.Width; a++)
+                            {
+                                for (int b = 0; b < InputImage.Size.Height; b++)
+                                {
+                                    OutputImage.SetPixel(a, b, Labels[a, b]);               // Set the pixel color at coordinate (x,y)
+                                }
+                            }
+                            if (saveImageDialog.ShowDialog() == DialogResult.OK)
+                                OutputImage.Save(saveImageDialog.FileName);
+                            return;
+                        }
+                        //thread.Abort();
+                        labelColor = Color.FromArgb(labelColor.R + 5, labelColor.G + 5, labelColor.B + 5);
+                        
+                    }
+                }
+            }
+            // Flush labels to image
+            Array.Copy(Labels, 0, Image, 0, Labels.Length);
             //TODO: step 1: label remaining objects
             //TODO: step 2: analyze labeled objects. remove not "triangily" objects
             
@@ -168,11 +209,38 @@ namespace INFOIBV
                     OutputImage.SetPixel(x, y, Image[x, y]);               // Set the pixel color at coordinate (x,y)
                 }
             }
-            
             pictureBox2.Image = (Image)OutputImage;                         // Display output image
             progressBar.Visible = false;                                    // Hide progress bar
         }
-        
+
+        private void Label(Color color, int x, int y, int width, int height)
+        {
+            //Console.WriteLine("x: " + x +" y: "+ y + " Color: " + color.R);
+            //Console.WriteLine("Color: " + color.R);
+            if (Labels[x, y] != Color.FromArgb(255,255,255))
+                return;
+            if (x < width - 1 && y < height -1 && Labels[x, y] == Color.FromArgb(255, 255, 255))
+            {
+                Labels[x, y] = color;
+                if (x - 1 > 0 && Labels[x - 1, y] == Color.FromArgb(255,255,255))
+                    Label(color, x - 1, y, width, height); // Left neighbour
+                if (Labels[x + 1, y] == Color.FromArgb(255, 255, 255))
+                    Label(color, x + 1, y, width, height); // Right neighbour
+                if (y - 1 > 0 && Labels[x, y - 1] == Color.FromArgb(255, 255, 255))
+                    Label(color, x, y - 1, width, height); // Top neighbour
+                if (Labels[x , y + 1] == Color.FromArgb(255, 255, 255))
+                    Label(color, x, y + 1, width, height); // Bottom neighbour
+                if (x - 1 > 0 &&  y - 1 > 0 && Labels[x - 1, y - 1] == Color.FromArgb(255, 255, 255))
+                    Label(color, x - 1, y - 1, width, height); // Left top neighbour
+                if (y - 1 > 0 &&Labels[x + 1, y -1] == Color.FromArgb(255, 255, 255))
+                    Label(color, x + 1, y - 1, width, height); // Right top neighbour
+                if (Labels[x + 1, y + 1] == Color.FromArgb(255, 255, 255))
+                    Label(color, x + 1, y + 1, width, height); // Right bottom neighbour
+                if (x - 1 > 0 && Labels[x - 1, y + 1] == Color.FromArgb(255, 255, 255))
+                    Label(color, x - 1, y + 1, width, height); // Left Bottom neighbour
+            }
+        }
+
         private void saveButton_Click(object sender, EventArgs e)
         {
             if (OutputImage == null) return;                                // Get out if no output image
